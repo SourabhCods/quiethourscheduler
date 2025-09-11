@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// User model
+model User {
+  id           String        @id
+  email        String        @unique
+  name         String
+  silentBlocks SilentBlock[] // relation: 1 user → many blocks
+}
+
+// SilentBlock model
+model SilentBlock {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  title     String
+  description String
+  startsAt  DateTime
+  endsAt    DateTime
+  status   String
+}
