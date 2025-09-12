@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,28 +15,33 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useRouter } from "next/navigation";
-import supabaseClient from "../../../lib/supabaseClient";
 import { Loader2Icon } from "lucide-react";
-import { DateAndTimePicker } from "./DateAndTimePicker";
+import supabaseClient from "../../../lib/supabaseClient";
 
 interface Block {
   title: string;
   description: string;
-  startDateAndTime: string;
-  endDateAndTime: string;
-  status: "scheduled" | "upcoming" | "ongoing" | "completed";
+  startsAt: string;
+  endsAt: string;
 }
 
 export default function BlockFormDialog() {
+  const [authUserId, setAuthUserId] = useState<string>();
   const [formData, setFormData] = useState<Block>({
     title: "",
     description: "",
-    startDateAndTime: "",
-    endDateAndTime: "",
-    status: "completed",
+    startsAt: "",
+    endsAt: "",
   });
-  const router = useRouter();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data } = await supabaseClient.auth.getUser();
+      setAuthUserId(data.user?.id);
+    };
+
+    fetchUser();
+  }, []);
 
   const handleOnInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -46,13 +51,29 @@ export default function BlockFormDialog() {
     }));
   };
 
-  const handleOnSignUp = async (e: React.FormEvent) => {
+  const createSilentBlock = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!authUserId) return;
+
     try {
-      const response = await axios.post("/api/newBlock", formData);
+      // Convert local datetime-local (string) -> UTC ISO string
+      const startsAtUTC = new Date(formData.startsAt).toISOString();
+      const endsAtUTC = new Date(formData.endsAt).toISOString();
+
+      const response = await axios.post("/api/newBlock", {
+        blockData: {
+          ...formData,
+          startsAt: startsAtUTC,
+          endsAt: endsAtUTC,
+        },
+        userId: authUserId,
+      });
+
       console.log(response.data);
+      window.location.href = "/";
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -64,17 +85,18 @@ export default function BlockFormDialog() {
 
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create Account</DialogTitle>
+          <DialogTitle>Create Quiet Block</DialogTitle>
           <DialogDescription>
-            Fill in your details to register a new account.
+            Fill up details to create a new block.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleOnSignUp} className="grid gap-4">
+        <form onSubmit={createSilentBlock} className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="username">Title</Label>
+            <Label htmlFor="title">Title</Label>
             <Input
-              id="title"
+              name="title"
+              value={formData.title}
               type="text"
               placeholder="What Block's For"
               onChange={handleOnInputChange}
@@ -83,9 +105,10 @@ export default function BlockFormDialog() {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="email">Description</Label>
+            <Label htmlFor="description">Description</Label>
             <Input
-              id="description"
+              name="description"
+              value={formData.description}
               type="text"
               placeholder="What's your goal ? Please write it here"
               onChange={handleOnInputChange}
@@ -93,27 +116,29 @@ export default function BlockFormDialog() {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="startDate&Time">Start Date & Time</Label>
-            {/* <Input
-              id="startDate&Time"
-              type="text"
+            <Label htmlFor="startsAt">Start Date & Time</Label>
+            <Input
+              name="startsAt"
+              value={formData.startsAt}
+              type="datetime-local"
               placeholder="Enter Start Date & Time"
               onChange={handleOnInputChange}
               required
-            /> */}
-            <DateAndTimePicker />
+            />
+            {/* <DateAndTimePicker /> */}
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="endDate&Time">End Date & Time</Label>
-            {/* <Input
-              id="endDate&Time"
-              type="text"
+            <Label htmlFor="endsAt">End Date & Time</Label>
+            <Input
+              name="endsAt"
+              value={formData.endsAt}
+              type="datetime-local"
               placeholder="Enter End Date & Time"
               onChange={handleOnInputChange}
               required
-            /> */}
-            <DateAndTimePicker />
+            />
+            {/* <DateAndTimePicker /> */}
           </div>
 
           <DialogFooter>

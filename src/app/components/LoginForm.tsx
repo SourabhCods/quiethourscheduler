@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,7 +23,7 @@ interface User {
   password: string;
 }
 
-export default function SignupDialog() {
+export default function LoginForm() {
   const [formData, setFormData] = useState<User>({
     username: "",
     email: "",
@@ -39,62 +38,34 @@ export default function SignupDialog() {
     }));
   };
 
-  const handleOnSignUp = async (e: React.FormEvent) => {
+  const handleOnLoginUser = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const supRes = await supabaseClient.auth.signUp({
+    const supRes = await supabaseClient.auth.signInWithPassword({
       email: formData.email,
       password: formData.password,
-      options: {
-        data: {
-          username: formData.username,
-        },
-      },
     });
 
     console.log(supRes);
-
-    try {
-      const res = await axios.post("/api/auth/signup", {
-        formData,
-        uid: supRes.data.user?.id,
-      });
-      console.log(res.data);
-    } catch (error) {
-      console.error("Signup error:", error);
-      return;
-    }
-
+    // redirect to dashboard
     window.location.href = "/";
   };
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">Sign Up</Button>
+        <Button variant="outline">Login</Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Create Account</DialogTitle>
+        <DialogHeader className="mb-5">
+          <DialogTitle>Login To Your Account</DialogTitle>
           <DialogDescription>
-            Fill in your details to register a new account.
+            Enter your credentials to make a plan
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleOnSignUp} className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="username">Username</Label>
-            <Input
-              name="username"
-              type="text"
-              value={formData.username}
-              placeholder="Enter username"
-              onChange={handleOnInputChange}
-              required
-            />
-          </div>
-
+        <form onSubmit={handleOnLoginUser} className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -119,14 +90,14 @@ export default function SignupDialog() {
             />
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="mt-5">
             <DialogClose asChild>
-              <Button type="button" variant="outline">
+              <Button type="button" variant="outline" size="lg">
                 Cancel
               </Button>
             </DialogClose>
             <Button type="submit" variant="outline" size="lg">
-              <Loader2Icon className="animate-spin" />
+              Login
             </Button>
           </DialogFooter>
         </form>

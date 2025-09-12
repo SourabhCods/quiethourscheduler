@@ -4,28 +4,16 @@ import client from "../../../../../lib/supabaseClient";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, password } = body;
-
-    // Supabase signup
-    const supRes = await client.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          username: name,
-        },
-      },
-    });
-    console.log(supRes);
-    console.log(supRes.data.user?.user_metadata);
-    // Mirror entry in Prisma User table
+    const { formData, uid } = body;
     const user = await prisma.user.create({
       data: {
-        id: supRes.data.user?.id ?? "",
-        email: email,
-        name: name,
+        id: uid,
+        email: formData.email,
+        name: formData.username,
       },
     });
+
+    console.log(user);
 
     return new Response("successful", {
       status: 200,

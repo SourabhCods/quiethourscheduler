@@ -26,5 +26,6 @@ model SilentBlock {
   description String
   startsAt  DateTime
   endsAt    DateTime
-  status   String
+  status   String     @default("scheduled")
+  notification_sent Boolean @default(false)
 }
