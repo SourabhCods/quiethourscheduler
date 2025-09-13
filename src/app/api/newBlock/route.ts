@@ -2,35 +2,21 @@ import prisma from "../../../../lib/prisma";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { blockData, userId } = body;
-
-    if (
-      !blockData?.title ||
-      !blockData?.startsAt ||
-      !blockData?.endsAt ||
-      !userId
-    ) {
-      return new Response(
-        JSON.stringify({ error: "Missing required block fields" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
+    const { blockData, userId } = await req.json();
 
     const newSilentBlock = await prisma.silentBlock.create({
       data: {
         title: blockData.title,
-        description: blockData.description ?? "",
+        description: blockData.description,
         startsAt: new Date(blockData.startsAt),
         endsAt: new Date(blockData.endsAt),
-        user: {
-          connect: { id: userId },
-        },
+        user: { connect: { id: userId } },
       },
     });
 
     return new Response(JSON.stringify(newSilentBlock), {
-      status: 200,
+      status: 201,
+      statusText: "Block Created",
       headers: { "Content-Type": "application/json" },
     });
   } catch (err) {

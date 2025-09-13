@@ -5,17 +5,8 @@ export async function GET(
   { params }: { params: { uid: string } }
 ) {
   try {
-    const { uid } = params;
-
-    if (!uid) {
-      return new Response(JSON.stringify({ error: "User ID is required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
     const data = await prisma.silentBlock.findMany({
-      where: { userId: uid },
+      where: { userId: params.uid },
     });
 
     return new Response(JSON.stringify(data), {
