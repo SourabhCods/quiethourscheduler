@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2Icon } from "lucide-react";
+import { Loader2Icon, PlusSquare } from "lucide-react";
 import supabaseClient from "../../../lib/supabaseClient";
 
 interface Block {
@@ -33,6 +33,7 @@ export default function BlockFormDialog() {
     startsAt: "",
     endsAt: "",
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -53,25 +54,26 @@ export default function BlockFormDialog() {
 
   const createSilentBlock = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
     if (!authUserId) return;
 
     try {
-      // Convert local datetime-local (string) -> UTC ISO string
       const startsAtUTC = new Date(formData.startsAt).toISOString();
       const endsAtUTC = new Date(formData.endsAt).toISOString();
 
-      const response = await axios.post("/api/newBlock", {
-        blockData: {
-          ...formData,
-          startsAt: startsAtUTC,
-          endsAt: endsAtUTC,
-        },
-        userId: authUserId,
-      });
-
-      console.log(response.data);
-      window.location.href = "/";
+      setTimeout(async () => {
+        await axios.post("/api/newBlock", {
+          blockData: {
+            ...formData,
+            startsAt: startsAtUTC,
+            endsAt: endsAtUTC,
+          },
+          userId: authUserId,
+        });
+        setLoading(false);
+        window.location.href = "/";
+      }, 2000);
     } catch (error) {
       console.error(error);
     }
@@ -80,7 +82,10 @@ export default function BlockFormDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">Create Quiet Block</Button>
+        <Button variant="outline" size="lg" className="flex items-center gap-2">
+          <PlusSquare className="h-5 w-5" />
+          Create Quiet Block
+        </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-[425px]">
@@ -125,7 +130,6 @@ export default function BlockFormDialog() {
               onChange={handleOnInputChange}
               required
             />
-            {/* <DateAndTimePicker /> */}
           </div>
 
           <div className="grid gap-2">
@@ -138,17 +142,25 @@ export default function BlockFormDialog() {
               onChange={handleOnInputChange}
               required
             />
-            {/* <DateAndTimePicker /> */}
           </div>
 
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline">
+              <Button type="button" variant="outline" size="lg">
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit" variant="outline" size="lg">
-              <Loader2Icon className="animate-spin" />
+            <Button
+              type="submit"
+              variant="outline"
+              size="lg"
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2Icon className="animate-spin h-5 w-5" />
+              ) : (
+                "Create Quiet Block"
+              )}
             </Button>
           </DialogFooter>
         </form>

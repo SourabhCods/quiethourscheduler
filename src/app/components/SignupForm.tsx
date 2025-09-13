@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2Icon } from "lucide-react";
+import { Loader2Icon, UserPlus2 } from "lucide-react";
 import supabaseClient from "../../../lib/supabaseClient";
 
 interface User {
@@ -31,6 +31,8 @@ export default function SignupDialog() {
     password: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
   const handleOnInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prevFormData) => ({
@@ -42,36 +44,41 @@ export default function SignupDialog() {
   const handleOnSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const supRes = await supabaseClient.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-      options: {
-        data: {
-          username: formData.username,
-        },
-      },
-    });
+    if (loading) return;
+    setLoading(true);
 
-    console.log(supRes);
+    setTimeout(async () => {
+      try {
+        const supRes = await supabaseClient.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              username: formData.username,
+            },
+          },
+        });
 
-    try {
-      const res = await axios.post("/api/auth/signup", {
-        formData,
-        uid: supRes.data.user?.id,
-      });
-      console.log(res.data);
-    } catch (error) {
-      console.error("Signup error:", error);
-      return;
-    }
+        await axios.post("/api/auth/signup", {
+          formData,
+          uid: supRes.data.user?.id,
+        });
 
-    window.location.href = "/";
+        window.location.href = "/";
+      } catch (error) {
+        console.error("Signup error:", error);
+        setLoading(false);
+      }
+    }, 20000);
   };
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">Sign Up</Button>
+        <Button variant="outline" className="flex items-center gap-2">
+          <UserPlus2 className="h-5 w-5" />
+          Sign Up
+        </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-[425px]">
@@ -121,12 +128,26 @@ export default function SignupDialog() {
 
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline">
+              <Button type="button" variant="outline" size="lg">
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit" variant="outline" size="lg">
-              <Loader2Icon className="animate-spin" />
+
+            <Button
+              type="submit"
+              variant="outline"
+              size="lg"
+              disabled={loading}
+              className="flex items-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2Icon className="animate-spin h-5 w-5" />
+                  Processing...
+                </>
+              ) : (
+                "Sign Up"
+              )}
             </Button>
           </DialogFooter>
         </form>

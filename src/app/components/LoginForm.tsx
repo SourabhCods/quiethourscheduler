@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2Icon } from "lucide-react";
+import { Loader2Icon, LogIn } from "lucide-react";
 import supabaseClient from "../../../lib/supabaseClient";
 
 interface User {
@@ -29,6 +29,7 @@ export default function LoginForm() {
     email: "",
     password: "",
   });
+  const [loading, setLoading] = useState(false);
 
   const handleOnInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -40,21 +41,27 @@ export default function LoginForm() {
 
   const handleOnLoginUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
-    const supRes = await supabaseClient.auth.signInWithPassword({
-      email: formData.email,
-      password: formData.password,
-    });
+    setTimeout(async () => {
+      await supabaseClient.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
 
-    console.log(supRes);
-    // redirect to dashboard
-    window.location.href = "/";
+      setLoading(false);
+
+      window.location.href = "/";
+    }, 2000);
   };
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">Login</Button>
+        <Button variant="outline" className="flex items-center gap-2">
+          <LogIn className="h-5 w-5" />
+          Login
+        </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-[425px]">
@@ -96,8 +103,17 @@ export default function LoginForm() {
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit" variant="outline" size="lg">
-              Login
+            <Button
+              type="submit"
+              variant="outline"
+              size="lg"
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2Icon className="animate-spin h-5 w-5" />
+              ) : (
+                "Login"
+              )}
             </Button>
           </DialogFooter>
         </form>

@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import SignupDialog from "./SignupForm";
 import supabaseClient from "../../../lib/supabaseClient";
@@ -17,9 +18,8 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import LoginForm from "./LoginForm";
-import { redirect } from "next/dist/server/api-utils";
-import { NextResponse } from "next/server";
 import { useRouter } from "next/navigation";
+import { LogOut, LogIn, UserPlus } from "lucide-react";
 
 const DashBoard = () => {
   const [currentUser, setCurrentUser] = useState<User>();
@@ -30,88 +30,90 @@ const DashBoard = () => {
     const fetchUser = async () => {
       const {
         data: { user },
-        error,
       } = await supabaseClient.auth.getUser();
-      console.log(user?.user_metadata);
       setCurrentUser({ uid: user?.id, username: user?.user_metadata.username });
     };
-
     fetchUser();
   }, []);
 
   useEffect(() => {
     if (!currentUser?.uid) return;
-
     const getUserBlocks = async () => {
       const res = await axios.get(
         `/api/quietBlock/allBlocks/${currentUser.uid}`
       );
       setQuietBlock(res.data);
     };
-
     getUserBlocks();
   }, [currentUser]);
 
   const getFormattedDate = (date: Date) => {
-    console.log(date);
     return format(date, "dd MMM yyyy HH:mm");
   };
 
   const logoutCurrentUser = async () => {
     const { error } = await supabaseClient.auth.signOut();
-
-    if (error) {
-      console.error("Logout failed:", error.message);
-      return;
-    }
-
+    if (error) return;
     window.location.href = "/";
   };
 
   return (
-    <>
-      <div className="w-[90%] h-auto border-1 border-stone-400 m-auto mt-6 p-5 rounded-xl">
-        <main>
-          <div className="flex justify-between items-center">
-            <p className="text-6xl">Welcome {currentUser?.username} !</p>
-            {currentUser?.uid == undefined ? (
-              <div className="w-50 p-4 flex justify-between items-center">
-                <LoginForm />
-                <SignupDialog />
-              </div>
-            ) : (
-              <Button variant="outline" size="lg" onClick={logoutCurrentUser}>
-                logout
-              </Button>
-            )}
-          </div>
-          <div className="flex justify-end items-center mt-50 mb-5">
-            <BlockFormDialog />
-          </div>
-          {quietBlocks && quietBlocks.length > 0 ? (
-            <div className="grid grid-cols-3 gap-x-20 gap-y-20">
-              {quietBlocks.map((block) => (
-                <div>
-                  <Card className="w-[25rem]">
-                    <CardHeader>
-                      <CardTitle>{block.title}</CardTitle>
-                      <CardDescription>{block.description}</CardDescription>
-                      <CardAction>{block.status}</CardAction>
-                    </CardHeader>
-                    <CardFooter>
-                      <div className="w-full flex justify-between align-middle">
-                        <p>{getFormattedDate(block.startsAt)}</p>
-                        <p>{getFormattedDate(block.endsAt)}</p>
-                      </div>
-                    </CardFooter>
-                  </Card>
-                </div>
-              ))}
+    <div className="w-[95%] max-w-7xl mx-auto mt-6 p-5 rounded-xl border border-stone-400">
+      <main>
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="font-sans font-semibold tracking-tight text-3xl md:text-5xl lg:text-6xl text-center md:text-left">
+            Welcome {currentUser?.username} !
+          </p>
+
+          {currentUser?.uid == undefined ? (
+            <div className="flex gap-4">
+              <LoginForm />
+              <SignupDialog />
             </div>
-          ) : null}
-        </main>
-      </div>
-    </>
+          ) : (
+            <Button
+              variant="outline"
+              size="lg"
+              className="flex items-center gap-2"
+              onClick={logoutCurrentUser}
+            >
+              <LogOut className="h-5 w-5" />
+              Logout
+            </Button>
+          )}
+        </div>
+
+        <div className="flex justify-end items-center mt-10 mb-5">
+          <BlockFormDialog />
+        </div>
+
+        {quietBlocks && quietBlocks.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {quietBlocks.map((block) => (
+              <Card key={block.id} className="w-full">
+                <CardHeader>
+                  <CardTitle>{block.title}</CardTitle>
+                  <CardDescription>{block.description}</CardDescription>
+                  <CardAction className="flex items-center gap-2">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+                    </span>
+                    {block.status}
+                  </CardAction>
+                </CardHeader>
+                <CardFooter>
+                  <div className="w-full flex flex-col sm:flex-row justify-between gap-2">
+                    <p>{getFormattedDate(block.startsAt)}</p>
+                    <p>{getFormattedDate(block.endsAt)}</p>
+                  </div>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        ) : null}
+      </main>
+    </div>
   );
 };
 
