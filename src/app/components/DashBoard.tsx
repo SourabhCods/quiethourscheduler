@@ -19,12 +19,12 @@ import {
 import { Button } from "@/components/ui/button";
 import LoginForm from "./LoginForm";
 import { useRouter } from "next/navigation";
-import { LogOut, LogIn, UserPlus } from "lucide-react";
+import { LogOut, LogIn, UserPlus, Loader2Icon } from "lucide-react";
 
 const DashBoard = () => {
   const [currentUser, setCurrentUser] = useState<User>();
   const [quietBlocks, setQuietBlock] = useState<QuietBlock[]>();
-  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -51,10 +51,17 @@ const DashBoard = () => {
     return format(date, "dd MMM yyyy HH:mm");
   };
 
-  const logoutCurrentUser = async () => {
-    const { error } = await supabaseClient.auth.signOut();
-    if (error) return;
-    window.location.href = "/";
+  const handleOnLogout = async () => {
+    setIsLoading(true);
+    try {
+      await supabaseClient.auth.signOut();
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 2000);
+    } catch (error) {
+      console.error(error);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -72,13 +79,16 @@ const DashBoard = () => {
             </div>
           ) : (
             <Button
+              onClick={handleOnLogout}
               variant="outline"
               size="lg"
               className="flex items-center gap-2"
-              onClick={logoutCurrentUser}
             >
-              <LogOut className="h-5 w-5" />
-              Logout
+              {isLoading ? (
+                <Loader2Icon className="h-5 w-5 animate-spin" />
+              ) : (
+                "Logout"
+              )}
             </Button>
           )}
         </div>

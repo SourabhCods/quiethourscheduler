@@ -17,15 +17,13 @@ import { Label } from "@/components/ui/label";
 import { Loader2Icon, LogIn } from "lucide-react";
 import supabaseClient from "../../../lib/supabaseClient";
 
-interface User {
-  username: string;
+interface LoginUser {
   email: string;
   password: string;
 }
 
 export default function LoginForm() {
-  const [formData, setFormData] = useState<User>({
-    username: "",
+  const [formData, setFormData] = useState<LoginUser>({
     email: "",
     password: "",
   });
@@ -33,26 +31,28 @@ export default function LoginForm() {
 
   const handleOnInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleOnLoginUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
 
-    setTimeout(async () => {
-      await supabaseClient.auth.signInWithPassword({
+    try {
+      const { error } = await supabaseClient.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
 
-      setLoading(false);
+      if (error) throw error;
 
       window.location.href = "/";
-    }, 2000);
+    } catch (error) {
+      console.error("Login error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -68,7 +68,7 @@ export default function LoginForm() {
         <DialogHeader className="mb-5">
           <DialogTitle>Login To Your Account</DialogTitle>
           <DialogDescription>
-            Enter your credentials to make a plan
+            Enter your credentials to access your dashboard.
           </DialogDescription>
         </DialogHeader>
 

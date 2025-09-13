@@ -1,10 +1,17 @@
 import prisma from "../../../../../lib/prisma";
-import client from "../../../../../lib/supabaseClient";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { formData, uid } = body;
+
+    if (!formData?.email || !formData?.username || !uid) {
+      return new Response(
+        JSON.stringify({ error: "Missing required fields" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     const user = await prisma.user.create({
       data: {
         id: uid,
@@ -13,14 +20,15 @@ export async function POST(req: Request) {
       },
     });
 
-    console.log(user);
-
-    return new Response("successful", {
+    return new Response(JSON.stringify(user), {
       status: 200,
-      statusText: "User Created",
+      headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unexpected exception";
-    return new Response(message, { status: 500 });
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }

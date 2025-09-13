@@ -26,7 +26,7 @@ interface Block {
 }
 
 export default function BlockFormDialog() {
-  const [authUserId, setAuthUserId] = useState<string>();
+  const [authUserId, setAuthUserId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Block>({
     title: "",
     description: "",
@@ -36,46 +36,41 @@ export default function BlockFormDialog() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchUser = async () => {
       const { data } = await supabaseClient.auth.getUser();
-      setAuthUserId(data.user?.id);
+      if (isMounted) setAuthUserId(data.user?.id ?? null);
     };
-
     fetchUser();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleOnInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const createSilentBlock = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
     if (!authUserId) return;
+    setLoading(true);
 
     try {
       const startsAtUTC = new Date(formData.startsAt).toISOString();
       const endsAtUTC = new Date(formData.endsAt).toISOString();
 
-      setTimeout(async () => {
-        await axios.post("/api/newBlock", {
-          blockData: {
-            ...formData,
-            startsAt: startsAtUTC,
-            endsAt: endsAtUTC,
-          },
-          userId: authUserId,
-        });
-        setLoading(false);
-        window.location.href = "/";
-      }, 2000);
+      await axios.post("/api/newBlock", {
+        blockData: { ...formData, startsAt: startsAtUTC, endsAt: endsAtUTC },
+        userId: authUserId,
+      });
+
+      window.location.href = "/";
     } catch (error) {
-      console.error(error);
+      console.error("Error creating block:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -92,57 +87,34 @@ export default function BlockFormDialog() {
         <DialogHeader>
           <DialogTitle>Create Quiet Block</DialogTitle>
           <DialogDescription>
-            Fill up details to create a new block.
+            Fill in details to create a new block.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={createSilentBlock} className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="title">Title</Label>
-            <Input
-              name="title"
-              value={formData.title}
-              type="text"
-              placeholder="What Block's For"
-              onChange={handleOnInputChange}
-              required
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
-            <Input
-              name="description"
-              value={formData.description}
-              type="text"
-              placeholder="What's your goal ? Please write it here"
-              onChange={handleOnInputChange}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="startsAt">Start Date & Time</Label>
-            <Input
-              name="startsAt"
-              value={formData.startsAt}
-              type="datetime-local"
-              placeholder="Enter Start Date & Time"
-              onChange={handleOnInputChange}
-              required
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="endsAt">End Date & Time</Label>
-            <Input
-              name="endsAt"
-              value={formData.endsAt}
-              type="datetime-local"
-              placeholder="Enter End Date & Time"
-              onChange={handleOnInputChange}
-              required
-            />
-          </div>
+          {["title", "description", "startsAt", "endsAt"].map((field) => (
+            <div className="grid gap-2" key={field}>
+              <Label htmlFor={field}>
+                {field === "startsAt"
+                  ? "Start Date & Time"
+                  : field === "endsAt"
+                  ? "End Date & Time"
+                  : field.charAt(0).toUpperCase() + field.slice(1)}
+              </Label>
+              <Input
+                name={field}
+                type={
+                  field === "startsAt" || field === "endsAt"
+                    ? "datetime-local"
+                    : "text"
+                }
+                placeholder={`Enter ${field}`}
+                value={(formData as any)[field]}
+                onChange={handleOnInputChange}
+                required={field !== "description"}
+              />
+            </div>
+          ))}
 
           <DialogFooter>
             <DialogClose asChild>

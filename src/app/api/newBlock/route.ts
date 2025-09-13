@@ -5,27 +5,39 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { blockData, userId } = body;
 
+    if (
+      !blockData?.title ||
+      !blockData?.startsAt ||
+      !blockData?.endsAt ||
+      !userId
+    ) {
+      return new Response(
+        JSON.stringify({ error: "Missing required block fields" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     const newSilentBlock = await prisma.silentBlock.create({
       data: {
         title: blockData.title,
-        description: blockData.description,
+        description: blockData.description ?? "",
         startsAt: new Date(blockData.startsAt),
         endsAt: new Date(blockData.endsAt),
         user: {
-          connect: {
-            id: userId,
-          },
+          connect: { id: userId },
         },
       },
     });
 
-    console.log(newSilentBlock);
-    return new Response("successful", {
+    return new Response(JSON.stringify(newSilentBlock), {
       status: 200,
-      statusText: "Block Created",
+      headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unexpected exception";
-    return new Response(message, { status: 500 });
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
