@@ -19,12 +19,13 @@ import {
 import { Button } from "@/components/ui/button";
 import LoginForm from "./LoginForm";
 import { useRouter } from "next/navigation";
-import { LogOut, LogIn, UserPlus, Loader2Icon } from "lucide-react";
+import { Loader2Icon } from "lucide-react";
 
 const DashBoard = () => {
   const [currentUser, setCurrentUser] = useState<User>();
   const [quietBlocks, setQuietBlock] = useState<QuietBlock[]>();
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -56,7 +57,8 @@ const DashBoard = () => {
     try {
       await supabaseClient.auth.signOut();
       setTimeout(() => {
-        window.location.href = "/";
+        router.push("/");
+        router.refresh();
       }, 2000);
     } catch (error) {
       console.error(error);

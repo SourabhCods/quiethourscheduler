@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2Icon, LogIn } from "lucide-react";
 import supabaseClient from "../../../lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 interface LoginUser {
   email: string;
@@ -28,6 +29,7 @@ export default function LoginForm() {
     password: "",
   });
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleOnInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -47,7 +49,8 @@ export default function LoginForm() {
 
       if (error) throw error;
 
-      window.location.href = "/";
+      router.push("/");
+      router.refresh();
     } catch (error) {
       console.error("Login error:", error);
     } finally {

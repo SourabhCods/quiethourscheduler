@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2Icon, UserPlus2 } from "lucide-react";
 import supabaseClient from "../../../lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 interface SignupUser {
   username: string;
@@ -31,6 +32,7 @@ export default function SignupDialog() {
     password: "",
   });
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleOnInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -54,7 +56,8 @@ export default function SignupDialog() {
         uid: supRes.data.user?.id,
       });
 
-      window.location.href = "/";
+      router.push("/");
+      router.refresh();
     } catch (error) {
       console.error("Signup error:", error);
     } finally {

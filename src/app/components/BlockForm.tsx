@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2Icon, PlusSquare } from "lucide-react";
 import supabaseClient from "../../../lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 interface Block {
   title: string;
@@ -34,6 +35,7 @@ export default function BlockFormDialog() {
     endsAt: "",
   });
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     let isMounted = true;
@@ -66,7 +68,8 @@ export default function BlockFormDialog() {
         userId: authUserId,
       });
 
-      window.location.href = "/";
+      router.push("/");
+      router.refresh();
     } catch (error) {
       console.error("Error creating block:", error);
     } finally {
