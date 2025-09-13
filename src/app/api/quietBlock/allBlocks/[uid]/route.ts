@@ -2,11 +2,12 @@ import prisma from "../../../../../../lib/prisma";
 
 export async function GET(
   req: Request,
-  { params }: { params: { uid: string } }
+  { params }: { params: Promise<{ uid: string }> }
 ) {
   try {
+    const { uid } = await params;
     const data = await prisma.silentBlock.findMany({
-      where: { userId: params.uid },
+      where: { userId: uid },
     });
 
     return new Response(JSON.stringify(data), {
